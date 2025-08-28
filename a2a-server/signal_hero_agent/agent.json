@@ -1,0 +1,17 @@
+{
+  "capabilities": {},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "description": "An agent specialized signaling a super hero using their preferred method of communication",
+  "name": "signal_hero_agent",
+  "skills": [
+    {
+      "id": "signal_hero",
+      "name": "Signal Hero",
+      "description": "Signals a super hero using their preferred method of communication",
+      "tags": []
+    }
+  ],
+  "url": "$HOST/a2a/signal_hero_agent",
+  "version": "1.0.0"
+}

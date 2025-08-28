@@ -1,0 +1,7 @@
+[project]
+name = "a2a-agent"
+version = "0.1.0"
+description = "An Example of A2A agent on Cloud Run"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["google-adk[a2a]==1.7.0", "requests"]
