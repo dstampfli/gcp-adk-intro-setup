@@ -12,6 +12,6 @@
       "tags": []
     }
   ],
-  "url": "$HOST/a2a/signal_hero_agent",
+  "url": "http://localhost:8080/a2a/signal_hero_agent",
   "version": "1.0.0"
 }
