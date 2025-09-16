@@ -1,0 +1,17 @@
+{
+  "capabilities": {},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "description": "An agent that's responsible for stopping idle VMs that have a specific label set",
+  "name": "cleanup_agent",
+  "skills": [
+    {
+      "id": "cleanup_agent",
+      "name": "Cleanup Agent",
+      "description": "Stops idle VMs that have a specific label set",
+      "tags": []
+    }
+  ],
+  "url": "http://localhost:8080/a2a/cleanup_agent",
+  "version": "1.0.0"
+}

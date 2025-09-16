@@ -35,7 +35,7 @@ ENV PYTHONUNBUFFERED=1
 # Install dependencies
 RUN uv sync
 
-EXPOSE $PORT
+EXPOSE $PORT 
 
 # Run the FastMCP server
 CMD ["uv", "run", "server.py"]
