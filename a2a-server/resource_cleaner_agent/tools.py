@@ -47,4 +47,4 @@ def stop_vms(instances: list[str]):
 def get_bearer_token(audience: str) -> str:
     request = google.auth.transport.requests.Request()
     token = google.oauth2.id_token.fetch_id_token(request, audience)
-    return token
+    return token if token else "<unauthenticated>"

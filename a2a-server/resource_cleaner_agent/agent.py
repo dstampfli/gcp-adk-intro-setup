@@ -25,7 +25,7 @@ from google.adk import Agent
 from google.adk.tools.mcp_tool import MCPToolset
 from google.adk.tools.mcp_tool import StreamableHTTPConnectionParams
 
-import cleanup_agent.tools as tools
+import resource_cleaner_agent.tools as tools
 
 MCP_SERVER_CLOUD_RUN_URL=os.getenv("MCP_SERVER_CLOUD_RUN_URL", "http://localhost:8888")
 
@@ -37,9 +37,10 @@ mcp_tool_set = MCPToolset(
     )
 )
 
+
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name="cleanup_agent",
+    name="resource_cleaner_agent",
     instruction=f"""
     Retrieve *all* resources that have the label "janitor-scheduled" set to a date that
     is less than or equal to the current date. Stop the resources. And remove the label.
