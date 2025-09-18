@@ -34,29 +34,42 @@ logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 
 mcp = FastMCP("MCP Server on Cloud Run")
 
+
 @mcp.tool()
-def add_label_to_instances(instances: list[str]):
-    """This method adds a new 'janitor-scheduled' label to all instances
+def get_labels(instances: list[str]) -> dict[str, dict[str, str]]:
+    """This method returns the labels of the given instances.
+
+    Args:
+        instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
+    Returns:
+        A dictionary containing the labels of the given instances, the keys are instance names and the values are the labels.
+    """
+    logger.info(f">>> 🛠️ Tool: 'get_labels' called with '{instances}'")
+
+    client = compute_v1.InstancesClient()
+    labels = {}
+    for instance in instances:
+        project, zone, name = instance.split("/")
+        vm = client.get(project=project, zone=zone, instance=name)
+        labels[vm.name] = dict(vm.labels)
+    return labels
+
+
+@mcp.tool()
+def add_label(instances: list[str], label_key: str, label_value: str) -> None:
+    """This method adds a new label to the given instances. If the label already exists, it's ovewritten.
 
     Args:
         instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
     """
-    logger.info(f">>> 🛠️ Tool: 'add_label_to_instances' called with '{instances}'")
-
-    # Schedule for deletion for next week
-    now = datetime.now(timezone.utc)
-    end_time = now + timedelta(days=7)
+    logger.info(f">>> 🛠️ Tool: 'add_label' called with '{instances}', '{label_key}', '{label_value}'")
 
     client = compute_v1.InstancesClient()
     for instance in instances:
         project, zone, name = instance.split("/")
-        vm = client.get(
-            project=project,
-            zone=zone,
-            instance=name
-        )
+        vm = client.get(project= project,zone=zone, instance=name)
 
-        vm.labels["janitor-scheduled"] = end_time.strftime("%Y-%m-%d")
+        vm.labels[label_key] = label_value
         
         client.set_labels(
             project=project,
@@ -67,8 +80,6 @@ def add_label_to_instances(instances: list[str]):
                 label_fingerprint=vm.label_fingerprint
             )
         )
-    
-    
 
 if __name__ == "__main__":
     logger.info(f"🚀 MCP server started on port {os.getenv('PORT', 8080)}")
