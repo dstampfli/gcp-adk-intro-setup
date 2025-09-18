@@ -81,6 +81,34 @@ def add_label(instances: list[str], label_key: str, label_value: str) -> None:
             )
         )
 
+
+@mcp.tool()
+def remove_label(instances: list[str], label_key: str) -> None:
+    """This method removes a label from the given instances. If the label doesn't exist, it's ignored.
+
+    Args:
+        instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
+    """
+    logger.info(f">>> 🛠️ Tool: 'remove_label' called with '{instances}', '{label_key}'")
+
+    client = compute_v1.InstancesClient()
+    for instance in instances:
+        project, zone, name = instance.split("/")
+        vm = client.get(project= project,zone=zone, instance=name)
+
+        vm.labels.pop(label_key, None)
+        
+        client.set_labels(
+            project=project,
+            zone=zone,
+            instance=name,
+            instances_set_labels_request_resource=compute_v1.InstancesSetLabelsRequest(
+                labels=vm.labels,
+                label_fingerprint=vm.label_fingerprint
+            )
+        )
+
+
 if __name__ == "__main__":
     logger.info(f"🚀 MCP server started on port {os.getenv('PORT', 8080)}")
     # Could also use 'sse' transport, host="0.0.0.0" required for Cloud Run.

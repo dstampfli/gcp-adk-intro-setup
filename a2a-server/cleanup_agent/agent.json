@@ -2,13 +2,13 @@
   "capabilities": {},
   "defaultInputModes": ["text/plain"],
   "defaultOutputModes": ["application/json"],
-  "description": "An agent that's responsible for stopping idle VMs that have a specific label set",
+  "description": "An agent that's responsible for stopping VMs that have a specific label set",
   "name": "cleanup_agent",
   "skills": [
     {
       "id": "cleanup_agent",
       "name": "Cleanup Agent",
-      "description": "Stops idle VMs that have a specific label set",
+      "description": "Stops VMs that have a specific label set",
       "tags": []
     }
   ],

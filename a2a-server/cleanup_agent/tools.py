@@ -19,30 +19,32 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
+from datetime import datetime, timezone
 
-from google.adk import Agent
-from google.adk.tools.mcp_tool import MCPToolset
-from google.adk.tools.mcp_tool import StreamableHTTPConnectionParams
+import google.auth.transport.requests
+import google.oauth2.id_token
 
-import cleanup_agent.tools as tools
+from google.cloud import compute_v1
 
-MCP_SERVER_CLOUD_RUN_URL=os.getenv("MCP_SERVER_CLOUD_RUN_URL", "http://localhost:8888")
+def get_current_date():
+    """Returns the current date in the YYYY-MM-DD format"""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
-mcp_tool_set = MCPToolset(
-    connection_params=StreamableHTTPConnectionParams(
-        url=f"{MCP_SERVER_CLOUD_RUN_URL}/",
-        headers={"Authorization": f"Bearer {tools.get_bearer_token(MCP_SERVER_CLOUD_RUN_URL)}"},
-    )
-)
+def stop_vms(instances: list[str]):
+    """Stops the given instances
 
-root_agent = Agent(
-    model="gemini-2.5-flash",
-    name="cleanup_agent",
-    instruction=f"""
-    Retrieve *all* resources that have the label "janitor-scheduled" set to a date that
-    is less than or equal to the current date. Stop the resources. And remove the label.
-    """,
-    tools=[mcp_tool_set, tools.get_current_date, tools.stop_vms]
-)
+    Args:
+        current_date: The current date in YYYY-MM-DD format.
+        instances: The list of instances to stop, the instance names have the format "project_id/zone/instance_name"
+    """
+    client = compute_v1.InstancesClient()
+    for instance in instances:
+        project_id, zone, instance_name = instance.split("/")
+        client.stop(project=project_id, zone=zone, instance=instance_name)
+
+
+def get_bearer_token(audience: str) -> str:
+    request = google.auth.transport.requests.Request()
+    token = google.oauth2.id_token.fetch_id_token(request, audience)
+    return token
