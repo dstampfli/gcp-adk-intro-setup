@@ -4,7 +4,7 @@
 MCP_SERVER_CLOUD_RUN_URL=`gcloud run services describe mcp-server \
     --project=$GOOGLE_CLOUD_PROJECT \
     --region $GOOGLE_CLOUD_LOCATION \
-     --format=value(status.url)`
+    --format='value(status.url)'`
 
 gcloud run deploy a2a-server \
     --no-allow-unauthenticated \
