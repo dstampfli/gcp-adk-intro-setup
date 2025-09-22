@@ -23,56 +23,104 @@ import asyncio
 import logging
 import os
 
+from datetime import datetime, timedelta, timezone
+
 from fastmcp import FastMCP 
+from google.cloud import compute_v1
 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 
-mcp = FastMCP("MCP Server on Cloud Run", stateless_http=True)
+mcp = FastMCP("MCP Server on Cloud Run")
 
-HERO_LOOKUP = {
-  "MYSTICAL": [
-    "Αλκμήνη",
-    "سارة"
-  ],
-  "TECHNOLOGICAL": [
-    "晴香",
-    "سارة"
-  ],
-  "CRIMINAL": [
-    "Ծովինար",
-    "Кассиопея",
-    "თამარი"
-  ]
-}
 
 @mcp.tool()
-def match_hero(available_heroes: list[str], threat_type: str) -> str:
-    """Use this to find the matching hero to a threat type.
+def get_labels(instances: list[str]) -> dict[str, dict[str, str]]:
+    """This method returns the labels of the given instances.
 
     Args:
-        available_heroes: The list of available heroes 
-        threat_type: The classification of the threat type, one of MYSTICAL, TECHNOLOGICAL or CRIMINAL
-
+        instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
     Returns:
-        The most appropriate hero, or the empty string if no hero matches
+        A dictionary containing the labels of the given instances, the keys are instance names and the values are the labels.
     """
-    logger.info(f">>> 🛠️ Tool: 'match_hero' called with '{available_heroes}' and '{threat_type}'")
-    
-    heroes_for_threat = HERO_LOOKUP.get(threat_type, [])
-    matching_heroes = list(set(available_heroes) & set(heroes_for_threat))
-    return matching_heroes[0] if matching_heroes else ""
+    logger.info(f">>> 🛠️ Tool: 'get_labels' called with '{instances}'")
+
+    client = compute_v1.InstancesClient()
+    labels = {}
+    for instance in instances:
+        project, zone, name = instance.split("/")
+        vm = client.get(project=project, zone=zone, instance=name)
+        labels[vm.name] = dict(vm.labels)
+    return labels
+
+
+@mcp.tool()
+def add_label(instances: list[str], label_key: str, label_value: str) -> None:
+    """This method adds a new label to the given instances. If the label already exists, it's ovewritten.
+
+    Args:
+        instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
+        label_key: The key of the label to add
+        label_value: The value of the label to add
+    """
+    logger.info(f">>> 🛠️ Tool: 'add_label' called with '{instances}', '{label_key}', '{label_value}'")
+
+    client = compute_v1.InstancesClient()
+    for instance in instances:
+        project, zone, name = instance.split("/")
+        vm = client.get(project= project,zone=zone, instance=name)
+
+        vm.labels[label_key] = label_value
+        
+        client.set_labels(
+            project=project,
+            zone=zone,
+            instance=name,
+            instances_set_labels_request_resource=compute_v1.InstancesSetLabelsRequest(
+                labels=vm.labels,
+                label_fingerprint=vm.label_fingerprint
+            )
+        )
+
+
+@mcp.tool()
+def remove_label(instances: list[str], label_key: str) -> None:
+    """This method removes a label from the given instances. If the label doesn't exist, it's ignored.
+
+    Args:
+        instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
+        label_key: The key of the label to remove
+    """
+    logger.info(f">>> 🛠️ Tool: 'remove_label' called with '{instances}', '{label_key}'")
+
+    client = compute_v1.InstancesClient()
+    for instance in instances:
+        project, zone, name = instance.split("/")
+        vm = client.get(project= project,zone=zone, instance=name)
+
+        vm.labels.pop(label_key, None)
+        
+        client.set_labels(
+            project=project,
+            zone=zone,
+            instance=name,
+            instances_set_labels_request_resource=compute_v1.InstancesSetLabelsRequest(
+                labels=vm.labels,
+                label_fingerprint=vm.label_fingerprint
+            )
+        )
 
 
 if __name__ == "__main__":
     logger.info(f"🚀 MCP server started on port {os.getenv('PORT', 8080)}")
     # Could also use 'sse' transport, host="0.0.0.0" required for Cloud Run.
     asyncio.run(
-        mcp.run_async(
+        mcp.run_http_async(
             transport="streamable-http",
             path="/",
             host="0.0.0.0",
             port=os.getenv("PORT", 8080),
+            stateless_http=True
         )
     )

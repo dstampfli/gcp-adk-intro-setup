@@ -19,23 +19,31 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-# Use the official Python image
-FROM python:3.13-slim
+from datetime import datetime, timezone
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+import google.auth.transport.requests
+import google.oauth2.id_token
 
-# Install the project into /app
-COPY . /app
-WORKDIR /app
+from google.cloud import compute_v1
 
-# Allow statements and log messages to immediately appear in the logs
-ENV PYTHONUNBUFFERED=1
+def get_current_date():
+    """Returns the current date in the YYYY-MM-DD format"""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-# Install dependencies
-RUN uv sync
 
-EXPOSE $PORT 
+def stop_vms(instances: list[str]):
+    """Stops the given instances
 
-# Run the FastMCP server
-CMD ["uv", "run", "server.py"]
+    Args:
+        instances: The list of instances to stop, the instance names have the format "project_id/zone/instance_name"
+    """
+    client = compute_v1.InstancesClient()
+    for instance in instances:
+        project_id, zone, instance_name = instance.split("/")
+        client.stop(project=project_id, zone=zone, instance=instance_name)
+
+
+def get_bearer_token(audience: str) -> str:
+    request = google.auth.transport.requests.Request()
+    token = google.oauth2.id_token.fetch_id_token(request, audience)
+    return token if token else "<unauthenticated>"

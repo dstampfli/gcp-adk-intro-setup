@@ -1,0 +1,17 @@
+{
+  "capabilities": {},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "description": "An agent that's responsible for stopping VMs that have a specific label set",
+  "name": "resource_cleaner_agent",
+  "skills": [
+    {
+      "id": "resource_cleaner_agent",
+      "name": "Cleaner Agent",
+      "description": "Stops VMs that have a specific label set",
+      "tags": []
+    }
+  ],
+  "url": "http://localhost:8080/a2a/resource_cleaner_agent",
+  "version": "1.0.0"
+}

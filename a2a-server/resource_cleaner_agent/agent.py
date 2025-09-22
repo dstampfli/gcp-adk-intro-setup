@@ -19,23 +19,31 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-# Use the official Python image
-FROM python:3.13-slim
+import os
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+from google.adk import Agent
+from google.adk.tools.mcp_tool import MCPToolset
+from google.adk.tools.mcp_tool import StreamableHTTPConnectionParams
 
-# Install the project into /app
-COPY . /app
-WORKDIR /app
+import resource_cleaner_agent.tools as tools
 
-# Allow statements and log messages to immediately appear in the logs
-ENV PYTHONUNBUFFERED=1
+MCP_SERVER_CLOUD_RUN_URL=os.getenv("MCP_SERVER_CLOUD_RUN_URL", "http://localhost:8888")
 
-# Install dependencies
-RUN uv sync
 
-EXPOSE $PORT 
+mcp_tool_set = MCPToolset(
+    connection_params=StreamableHTTPConnectionParams(
+        url=f"{MCP_SERVER_CLOUD_RUN_URL}/",
+        headers={"Authorization": f"Bearer {tools.get_bearer_token(MCP_SERVER_CLOUD_RUN_URL)}"},
+    )
+)
 
-# Run the FastMCP server
-CMD ["uv", "run", "server.py"]
+
+root_agent = Agent(
+    model="gemini-2.5-flash",
+    name="resource_cleaner_agent",
+    instruction=f"""
+    Retrieve *all* resources that have the label "janitor-scheduled" set to a date that
+    is less than or equal to the current date. Stop the resources. And remove the label.
+    """,
+    tools=[mcp_tool_set, tools.get_current_date, tools.stop_vms]
+)
