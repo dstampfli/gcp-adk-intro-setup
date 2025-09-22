@@ -35,7 +35,6 @@ def stop_vms(instances: list[str]):
     """Stops the given instances
 
     Args:
-        current_date: The current date in YYYY-MM-DD format.
         instances: The list of instances to stop, the instance names have the format "project_id/zone/instance_name"
     """
     client = compute_v1.InstancesClient()

@@ -61,6 +61,8 @@ def add_label(instances: list[str], label_key: str, label_value: str) -> None:
 
     Args:
         instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
+        label_key: The key of the label to add
+        label_value: The value of the label to add
     """
     logger.info(f">>> 🛠️ Tool: 'add_label' called with '{instances}', '{label_key}', '{label_value}'")
 
@@ -88,6 +90,7 @@ def remove_label(instances: list[str], label_key: str) -> None:
 
     Args:
         instances: The list of instances to update, the instance names have the format "project_id/zone/instance_name"
+        label_key: The key of the label to remove
     """
     logger.info(f">>> 🛠️ Tool: 'remove_label' called with '{instances}', '{label_key}'")
 
